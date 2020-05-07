@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t daisenthal/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run -e CI=true daisenthal/react-test npm run test
+
+after_success:
+    - docker build -t daisenthal/multi-client ./client
+    - docker build -t daisenthal/multi-nginx ./nginx
+    - docker build -t daisenthal/multi-server ./server
+    - docker build -t daisenthal/multi-worker ./worker
+
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+    - docker push daisenthal/multi-client
+    - docker push daisenthal/multi-nginx
+    - docker push daisenthal/multi-server
+    - docker push daisenthal/multi-worker
